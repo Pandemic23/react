@@ -1,7 +1,9 @@
 import {Link} from 'react-router-dom';
 import '../css/App.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProfileEdit from './ProfileEdit';
+import { blogApi } from '../services/api';
+import LoginForm from './LoginForm';
 
 const App=()=> {
   let [posts] = useState([
@@ -22,19 +24,43 @@ const App=()=> {
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
 
-  const [profile, setProfile] = useState({
-    name: '관리자 이름',
-    bio: '안녕하세요! 저는 블로그 관리자입니다. 웹 개발과 프로그래밍에 관심이 많습니다.',
-    image: 'https://via.placeholder.com/150',
-    github: 'https://github.com',
-    linkedin: 'https://linkedin.com'
-  });
-  
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [user, setUser] = useState(null);
 
-  const handleProfileSave = (newProfile) => {
-    setProfile(newProfile);
-    setIsEditingProfile(false);
+  useEffect(() => {
+    async function checkUser() {
+      try {
+        const currentUser = await blogApi.auth.getCurrentUser();
+        setUser(currentUser);
+        if (currentUser) {
+          const data = await blogApi.getProfile(); // 저장된 프로필 정보 로드
+          setProfile(data); // avatar_url 포함한 프로필 정보 설정
+        }
+      } catch (error) {
+        console.error('사용자 확인 에러:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    checkUser();
+  }, []);
+
+  const handleProfileSave = async (newProfile) => {
+    try {
+      await blogApi.updateProfile(newProfile);
+      const updatedProfile = await blogApi.getProfile();
+      setProfile(updatedProfile);
+      setIsEditingProfile(false);
+    } catch (error) {
+      console.error('프로필 업데이트 에러:', error);
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    window.location.reload(); // 로그인 성공 후 페이지 새로고침
   };
 
   const good = <Good/>
@@ -53,75 +79,80 @@ const App=()=> {
         </nav>
       </header>
 
-      {/* 메인 컨텐츠 레이아웃 */}
-      <div className='main-container'>
-        {/* 블로그 포스트 영역 */}
-        <main className='content-area'>
-          {currentPosts.map((post) => (
-            <div className='list' key={post.id}>
-              <div className="post-preview">
-                {post.image && (
-                  <img 
-                    src={post.image} 
-                    alt={post.title} 
-                    className="post-thumbnail"
-                  />
-                )}
-                <div className="post-info">
-                  <Link to={`/post/${post.id}`}>{post.title}</Link>
-                  <p className="post-excerpt">{post.excerpt}</p>
-                  <div className="post-meta">
-                    <span>{post.createdAt}</span>
-                    <div className='goodbad'> {good}{bad} </div>
+      {!user ? (
+        <LoginForm onLoginSuccess={handleLoginSuccess} />
+      ) : (
+        <div className='main-container'>
+          {/* 블로그 포스트 영역 */}
+          <main className='content-area'>
+            {currentPosts.map((post) => (
+              <div className='list' key={post.id}>
+                <div className="post-preview">
+                  {post.image && (
+                    <img 
+                      src={post.image} 
+                      alt={post.title} 
+                      className="post-thumbnail"
+                    />
+                  )}
+                  <div className="post-info">
+                    <Link to={`/post/${post.id}`}>{post.title}</Link>
+                    <p className="post-excerpt">{post.excerpt}</p>
+                    <div className="post-meta">
+                      <span>{post.createdAt}</span>
+                      <div className='goodbad'> {good}{bad} </div>
+                    </div>
                   </div>
                 </div>
+                <hr/>
               </div>
-              <hr/>
-            </div>
-          ))}
+            ))}
 
-          <div className="pagination">
-            <button 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              이전
-            </button>
-            <span>페이지 {currentPage}</span>
-            <button 
-              onClick={() => setCurrentPage(prev => 
-                Math.min(prev + 1, Math.ceil(posts.length / postsPerPage))
-              )}
-              disabled={currentPage >= Math.ceil(posts.length / postsPerPage)}
-            >
-              다음
-            </button>
-          </div>
-        </main>
-
-        {/* 사이드바 프로필 */}
-        <aside className='sidebar'>
-          <div className='profile-card'>
-            <img 
-              src={profile.image} 
-              alt="프로필 이미지" 
-              className='profile-image'
-            />
-            <h2>{profile.name}</h2>
-            <p className='bio'>{profile.bio}</p>
-            <div className='social-links'>
-              <a href={profile.github} target="_blank" rel="noopener noreferrer">GitHub</a>
-              <a href={profile.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <div className="pagination">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                이전
+              </button>
+              <span>페이지 {currentPage}</span>
+              <button 
+                onClick={() => setCurrentPage(prev => 
+                  Math.min(prev + 1, Math.ceil(posts.length / postsPerPage))
+                )}
+                disabled={currentPage >= Math.ceil(posts.length / postsPerPage)}
+              >
+                다음
+              </button>
             </div>
-            <button 
-              className="edit-profile-button"
-              onClick={() => setIsEditingProfile(true)}
-            >
-              프로필 수정
-            </button>
-          </div>
-        </aside>
-      </div>
+          </main>
+
+          {/* 사이드바 프로필 */}
+          {!loading && profile && (
+            <aside className='sidebar'>
+              <div className='profile-card'>
+                <img 
+                  src={profile.avatar_url || "/images/default-avatar.jpg"} 
+                  alt="프로필 이미지" 
+                  className='profile-image'
+                />
+                <h2>{profile.name}</h2>
+                <p className='bio'>{profile.bio}</p>
+                <div className='social-links'>
+                  <a href={profile.github_url} target="_blank" rel="noopener noreferrer">GitHub</a>
+                  <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                </div>
+                <button 
+                  className="edit-profile-button"
+                  onClick={() => setIsEditingProfile(true)}
+                >
+                  프로필 수정
+                </button>
+              </div>
+            </aside>
+          )}
+        </div>
+      )}
 
       {isEditingProfile && (
         <ProfileEdit 

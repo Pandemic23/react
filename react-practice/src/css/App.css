@@ -69,17 +69,19 @@ body{
 }
 
 .header {
-  background-color: #ffffff;
+  background: linear-gradient(to right, #2193b0, #6dd5ed);
   padding: 1rem 2rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
 .logo {
   font-size: 1.5rem;
   font-weight: bold;
+  color: white;
 }
 
 .main-nav {
@@ -89,12 +91,13 @@ body{
 
 .main-nav a {
   text-decoration: none;
-  color: #333;
+  color: white;
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .main-nav a:hover {
-  color: #007bff;
+  color: #e0e0e0;
 }
 
 .main-container {
@@ -104,9 +107,12 @@ body{
   max-width: 1200px;
   margin: 2rem auto;
   padding: 0 1rem;
+  position: relative;
 }
 
 .content-area {
+  grid-column: 1;
+  min-height: 100vh;
   background: #fff;
   padding: 1rem;
   border-radius: 8px;
@@ -118,6 +124,8 @@ body{
   position: sticky;
   top: 2rem;
   height: fit-content;
+  grid-column: 2;
+  align-self: start;
 }
 
 .profile-card {
