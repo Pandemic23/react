@@ -1,7 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 
+console.log('환경변수 확인:', {
+  SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
+  SUPABASE_KEY: process.env.REACT_APP_SUPABASE_KEY
+});
+
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
 const supabaseKey = process.env.REACT_APP_SUPABASE_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Supabase 환경변수가 설정되지 않았습니다.');
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export const blogApi = {
