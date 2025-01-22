@@ -4,9 +4,15 @@ import { useState } from 'react';
 import ProfileEdit from './ProfileEdit';
 
 const App=()=> {
-  let [title] = useState([
-    '첫번째', '두번째', '세번째', '네번째', '다섯번째',
-    '여섯번째', '일곱번째', '여덟번째', '아홉번째', '열번째'
+  let [posts] = useState([
+    {
+      id: 1,
+      title: '첫번째 게시글',
+      excerpt: '첫번째 게시글의 미리보기 내용입니다.',
+      image: 'https://via.placeholder.com/300x200',
+      createdAt: '2024-03-21'
+    },
+    // ... 더 많은 게시글
   ]);
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -14,7 +20,7 @@ const App=()=> {
 
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = title.slice(indexOfFirstPost, indexOfLastPost);
+  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
 
   const [profile, setProfile] = useState({
     name: '관리자 이름',
@@ -51,11 +57,25 @@ const App=()=> {
       <div className='main-container'>
         {/* 블로그 포스트 영역 */}
         <main className='content-area'>
-          {currentPosts.map((title, index) => (
-            <div className='list' key={index}>
-              <Link to='/'>{title}</Link>      
-              <div className='goodbad'> {good}{bad} </div>
-              <p>작성자: @</p>
+          {currentPosts.map((post) => (
+            <div className='list' key={post.id}>
+              <div className="post-preview">
+                {post.image && (
+                  <img 
+                    src={post.image} 
+                    alt={post.title} 
+                    className="post-thumbnail"
+                  />
+                )}
+                <div className="post-info">
+                  <Link to={`/post/${post.id}`}>{post.title}</Link>
+                  <p className="post-excerpt">{post.excerpt}</p>
+                  <div className="post-meta">
+                    <span>{post.createdAt}</span>
+                    <div className='goodbad'> {good}{bad} </div>
+                  </div>
+                </div>
+              </div>
               <hr/>
             </div>
           ))}
@@ -70,9 +90,9 @@ const App=()=> {
             <span>페이지 {currentPage}</span>
             <button 
               onClick={() => setCurrentPage(prev => 
-                Math.min(prev + 1, Math.ceil(title.length / postsPerPage))
+                Math.min(prev + 1, Math.ceil(posts.length / postsPerPage))
               )}
-              disabled={currentPage >= Math.ceil(title.length / postsPerPage)}
+              disabled={currentPage >= Math.ceil(posts.length / postsPerPage)}
             >
               다음
             </button>

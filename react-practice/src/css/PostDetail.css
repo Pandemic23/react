@@ -1,0 +1,27 @@
+.post-detail {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.post-meta {
+  color: #666;
+  margin: 1rem 0;
+  display: flex;
+  gap: 1rem;
+}
+
+.post-image {
+  margin: 2rem 0;
+}
+
+.post-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.post-content {
+  line-height: 1.8;
+  font-size: 1.1rem;
+} 

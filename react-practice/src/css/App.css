@@ -114,6 +114,7 @@ body{
 }
 
 .sidebar {
+  position: -webkit-sticky;
   position: sticky;
   top: 2rem;
   height: fit-content;
@@ -165,4 +166,34 @@ body{
 
 .pagination {
   margin-top: 2rem;
+}
+
+.post-preview {
+  display: flex;
+  gap: 1rem;
+  align-items: start;
+}
+
+.post-thumbnail {
+  width: 200px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.post-info {
+  flex: 1;
+}
+
+.post-excerpt {
+  color: #666;
+  margin: 0.5rem 0;
+}
+
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #888;
+  font-size: 0.9rem;
 }

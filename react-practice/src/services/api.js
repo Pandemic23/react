@@ -48,5 +48,16 @@ export const blogApi = {
     )
     
     if (error) throw error
+  },
+
+  async getPost(id) {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return data;
   }
 }; 
