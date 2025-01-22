@@ -63,6 +63,16 @@ const App=()=> {
     window.location.reload(); // 로그인 성공 후 페이지 새로고침
   };
 
+  const handleLogout = async () => {
+    try {
+      await blogApi.auth.signOut();
+      setUser(null);
+      setProfile(null);
+    } catch (error) {
+      console.error('로그아웃 에러:', error);
+    }
+  };
+
   const good = <Good/>
   const bad = <Bad/>
 
@@ -142,12 +152,20 @@ const App=()=> {
                   <a href={profile.github_url} target="_blank" rel="noopener noreferrer">GitHub</a>
                   <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer">LinkedIn</a>
                 </div>
-                <button 
-                  className="edit-profile-button"
-                  onClick={() => setIsEditingProfile(true)}
-                >
-                  프로필 수정
-                </button>
+                <div className="profile-buttons">
+                  <button 
+                    className="edit-profile-button"
+                    onClick={() => setIsEditingProfile(true)}
+                  >
+                    프로필 수정
+                  </button>
+                  <button 
+                    className="logout-button"
+                    onClick={handleLogout}
+                  >
+                    로그아웃
+                  </button>
+                </div>
               </div>
             </aside>
           )}
