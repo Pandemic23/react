@@ -1,11 +1,14 @@
 import { observer } from 'mobx-react-lite';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { postStore } from '../stores/PostStore';
 import { userStore } from '../stores/UserStore';
+import { authStore } from '../stores/AuthStore';
 import { useState, useEffect } from 'react';
 import { blogApi } from '../services/api';
+import '../css/PostList.css';
 
 const PostList = observer(() => {
+  const navigate = useNavigate();
   const [hover, setHover] = useState({ good: false, bad: false });
 
   const handleReaction = async (postId, type) => {
@@ -25,7 +28,7 @@ const PostList = observer(() => {
         userStore.loadUser(post.author_id);
       }
     });
-  }, [postStore.posts]);
+  }, []);
 
   const Good = ({ postId, likes }) => {
     return (
@@ -57,6 +60,18 @@ const PostList = observer(() => {
 
   return (
     <>
+      <div className="post-list-header">
+        <h2>게시글 목록</h2>
+        {authStore.user && (
+          <button 
+            className="write-button"
+            onClick={() => navigate('/add')}
+          >
+            글쓰기
+          </button>
+        )}
+      </div>
+
       {postStore.posts.map((post) => {
     
         return (

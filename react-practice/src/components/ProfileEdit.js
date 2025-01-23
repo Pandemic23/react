@@ -1,140 +1,125 @@
 import React, { useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import { authStore } from '../stores/AuthStore';
 import '../css/ProfileEdit.css';
-import { blogApi } from '../services/api';
 
-const ProfileEdit = ({ profile, onSave, onCancel }) => {
-  const [editedProfile, setEditedProfile] = useState({
-    name: profile.name || '',
-    bio: profile.bio || '',
-    avatar_url: profile.avatar_url || '',
-    github_url: profile.github_url || '',
-    linkedin_url: profile.linkedin_url || '',
-    newImage: null
+const ProfileEdit = observer(() => {
+  const [formData, setFormData] = useState({
+    name: authStore.profile?.name || '',
+    bio: authStore.profile?.bio || '',
+    github_url: authStore.profile?.github_url || '',
+    linkedin_url: authStore.profile?.linkedin_url || ''
   });
+  const [imageFile, setImageFile] = useState(null);
   const [error, setError] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setIsSaving(true);
-
-    try {
-      const imageFile = editedProfile.newImage;
-      const updatedProfile = await blogApi.updateProfile(
-        {
-          name: editedProfile.name,
-          bio: editedProfile.bio,
-          avatar_url: editedProfile.avatar_url,
-          github_url: editedProfile.github_url,
-          linkedin_url: editedProfile.linkedin_url
-        },
-        imageFile
-      );
-      onSave(updatedProfile);
-    } catch (error) {
-      setError(error.message || '프로필 업데이트에 실패했습니다.');
-    } finally {
-      setIsSaving(false);
-    }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditedProfile({ 
-          ...editedProfile, 
-          avatar_url: reader.result,
-          newImage: file
-        });
-      };
-      reader.readAsDataURL(file);
+    if (file && file.type.startsWith('image/')) {
+      setImageFile(file);
+    } else {
+      setError('이미지 파일만 업로드 가능합니다.');
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      await authStore.updateProfile({ ...formData, imageFile });
+    } catch (error) {
+      setError(error.message || '프로필 업데이트에 실패했습니다.');
     }
   };
 
   return (
     <div className="profile-edit-overlay">
-      <form className="profile-edit-form" onSubmit={handleSubmit}>
+      <div className="profile-edit-modal">
         <h2>프로필 수정</h2>
-        
-        {error && (
-          <div className="error-message">
-            {error}
+        {error && <div className="error-message">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>프로필 이미지</label>
+            <div className="image-preview">
+              <img 
+                src={authStore.profile?.avatar_url || "/images/default-avatar.jpg"} 
+                alt="프로필 미리보기" 
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+            </div>
           </div>
-        )}
 
-        <div className="form-group">
-          <label>프로필 이미지</label>
-          <div className="image-upload">
-            <img 
-              src={editedProfile.avatar_url || "https://via.placeholder.com/150"} 
-              alt="프로필 미리보기" 
-            />
-            <input 
-              type="file" 
-              accept="image/*" 
-              onChange={handleImageChange}
+          <div className="form-group">
+            <label>이름</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
             />
           </div>
-        </div>
 
-        <div className="form-group">
-          <label>이름</label>
-          <input
-            type="text"
-            value={editedProfile.name}
-            onChange={(e) => setEditedProfile({...editedProfile, name: e.target.value})}
-          />
-        </div>
+          <div className="form-group">
+            <label>자기소개</label>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              rows="3"
+            />
+          </div>
 
-        <div className="form-group">
-          <label>자기소개</label>
-          <textarea
-            value={editedProfile.bio}
-            onChange={(e) => setEditedProfile({...editedProfile, bio: e.target.value})}
-          />
-        </div>
+          <div className="form-group">
+            <label>GitHub 주소</label>
+            <input
+              type="url"
+              name="github_url"
+              value={formData.github_url}
+              onChange={handleChange}
+            />
+          </div>
 
-        <div className="form-group">
-          <label>GitHub 주소</label>
-          <input
-            type="url"
-            value={editedProfile.github_url}
-            onChange={(e) => setEditedProfile({...editedProfile, github_url: e.target.value})}
-          />
-        </div>
+          <div className="form-group">
+            <label>LinkedIn 주소</label>
+            <input
+              type="url"
+              name="linkedin_url"
+              value={formData.linkedin_url}
+              onChange={handleChange}
+            />
+          </div>
 
-        <div className="form-group">
-          <label>LinkedIn 주소</label>
-          <input
-            type="url"
-            value={editedProfile.linkedin_url}
-            onChange={(e) => setEditedProfile({...editedProfile, linkedin_url: e.target.value})}
-          />
-        </div>
-
-        <div className="form-buttons">
-          <button 
-            type="submit" 
-            className="save-button"
-            disabled={isSaving}
-          >
-            {isSaving ? '저장 중...' : '저장'}
-          </button>
-          <button 
-            type="button" 
-            onClick={onCancel} 
-            className="cancel-button"
-            disabled={isSaving}
-          >
-            취소
-          </button>
-        </div>
-      </form>
+          <div className="form-actions">
+            <button 
+              type="button" 
+              className="cancel-button"
+              onClick={() => authStore.setEditingProfile(false)}
+            >
+              취소
+            </button>
+            <button 
+              type="submit"
+              className="save-button"
+            >
+              저장
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
-};
+});
 
 export default ProfileEdit; 

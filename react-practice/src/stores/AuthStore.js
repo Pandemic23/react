@@ -6,6 +6,7 @@ class AuthStore {
   profile = null;
   loading = true;
   error = null;
+  isEditingProfile = false;
 
   constructor() {
     makeObservable(this, {
@@ -13,9 +14,12 @@ class AuthStore {
       profile: observable,
       loading: observable,
       error: observable,
+      isEditingProfile: observable,
       checkUser: action,
       login: action,
-      logout: action
+      logout: action,
+      setEditingProfile: action,
+      updateProfile: action
     });
   }
 
@@ -57,6 +61,24 @@ class AuthStore {
       this.error = error.message;
     }
   }
+
+  setEditingProfile = (isEditing) => {
+    this.isEditingProfile = isEditing;
+  };
+
+  updateProfile = async (profileData) => {
+    this.loading = true;
+    try {
+      const updatedProfile = await blogApi.updateProfile(profileData);
+      this.profile = updatedProfile;
+      this.isEditingProfile = false;
+    } catch (error) {
+      this.error = error.message;
+      throw error;
+    } finally {
+      this.loading = false;
+    }
+  };
 }
 
 export const authStore = new AuthStore(); 

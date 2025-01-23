@@ -5,6 +5,7 @@ import '../css/PostDetail.css';
 import { observer } from 'mobx-react-lite';
 import MainLayout from './layout/MainLayout';
 import { userStore } from '../stores/UserStore';
+import { postStore } from '../stores/PostStore';
 
 const PostDetail = observer(() => {
   const { id } = useParams();
@@ -38,51 +39,55 @@ const PostDetail = observer(() => {
   if (!post) return <div>로딩 중...</div>;
 
   return (
-    <MainLayout>
-      <div className="post-detail">
+    <div className="post-detail">
+      <div className="post-header">
         <h1>{post.title}</h1>
-        <div className="post-meta">
-          <span>작성자: {post.author}</span>
-          <span>작성일: {post.createdAt}</span>
-        </div>
-        {post.image && (
-          <div className="post-image">
-            <img 
-              src={post.image} 
-              alt={post.title}
-              onError={(e) => {
-                e.target.src = "/images/default-thumbnail.jpg";
-              }}
-            />
-          </div>
-        )}
-        <div className="post-content">
-          {post.content}
-        </div>
-        
-        <footer className="post-navigation">
-          <div className="nav-links">
-            {navigation.prev && (
-              <Link to={`/post/${navigation.prev.id}`} className="nav-link prev">
-                <span className="nav-label">이전 글</span>
-                <span className="nav-title">{navigation.prev.title}</span>
-              </Link>
-            )}
-            
-            <button onClick={() => navigate('/')} className="nav-home">
-              목록으로
-            </button>
-            
-            {navigation.next && (
-              <Link to={`/post/${navigation.next.id}`} className="nav-link next">
-                <span className="nav-label">다음 글</span>
-                <span className="nav-title">{navigation.next.title}</span>
-              </Link>
-            )}
-          </div>
-        </footer>
+        <button className='edit-button'
+        onClick={() => navigate(`/post/${post.id}/edit`)}>
+          수정
+        </button>
       </div>
-    </MainLayout>
+      <div className="post-meta">
+        <span>작성자: {post.author}</span>
+        <span>작성일: {post.createdAt}</span>
+      </div>
+      {post.image && (
+        <div className="post-image">
+          <img 
+            src={post.image} 
+            alt={post.title}
+            onError={(e) => {
+              e.target.src = "/images/default-thumbnail.jpg";
+            }}
+          />
+        </div>
+      )}
+      <div className="post-content">
+        {post.content}
+      </div>
+      
+      <footer className="post-navigation">
+        <div className="nav-links">
+          {navigation.prev && (
+            <Link to={`/post/${navigation.prev.id}`} className="nav-link prev">
+              <span className="nav-label">이전 글</span>
+              <span className="nav-title">{navigation.prev.title}</span>
+            </Link>
+          )}
+          
+          <button onClick={() => navigate('/')} className="nav-home">
+            목록으로
+          </button>
+          
+          {navigation.next && (
+            <Link to={`/post/${navigation.next.id}`} className="nav-link next">
+              <span className="nav-label">다음 글</span>
+              <span className="nav-title">{navigation.next.title}</span>
+            </Link>
+          )}
+        </div>
+      </footer>
+    </div>
   );
 });
 

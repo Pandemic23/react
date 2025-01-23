@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { authStore } from '../../stores/AuthStore';
+import ProfileEdit from '../ProfileEdit';
 
 const MainLayout = observer(({ children }) => {
   return (
@@ -54,6 +55,9 @@ const MainLayout = observer(({ children }) => {
           </aside>
         )}
       </div>
+
+      {/* 프로필 수정 모달 */}
+      {authStore.isEditingProfile && <ProfileEdit />}
     </div>
   );
 });
