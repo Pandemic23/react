@@ -212,14 +212,51 @@ export const blogApi = {
   },
 
   async getPost(id) {
-    const { data, error } = await supabase
-      .from('posts')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) throw error;
-    return data;
+    try {
+      // 먼저 게시글 데이터 가져오기
+      const { data: post, error: postError } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (postError) throw postError;
+
+      // 작성자 정보 가져오기
+      let authorName = '익명';
+      if (post.author_id) {
+        const { data: authorData } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', post.author_id)
+          .single();
+        
+        if (authorData) {
+          authorName = authorData.name;
+        }
+      }
+
+      // 데이터 포맷팅
+      return {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        excerpt: post.excerpt,
+        image: post.image_url,
+        createdAt: new Date(post.created_at).toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        author: authorName,
+        author_id: post.author_id,
+        likes: post.likes || 0,
+        dislikes: post.dislikes || 0
+      };
+    } catch (error) {
+      console.error('게시글 상세 조회 에러:', error);
+      throw error;
+    }
   },
 
   // 프로필 이미지 업로드

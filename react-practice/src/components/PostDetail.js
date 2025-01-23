@@ -19,11 +19,11 @@ const PostDetail = observer(() => {
     const loadPost = async () => {
       try {
         const postData = await blogApi.getPost(parseInt(id));
-        setPost(postData);
         if (postData.author_id) {
           await userStore.loadUser(postData.author_id);
         }
-        console.log(postData);  
+        setPost(postData);
+        
         // 이전/다음 게시물 가져오기
         const { data: navData } = await blogApi.getPostNavigation(parseInt(id));
         setNavigation(navData);
@@ -37,19 +37,23 @@ const PostDetail = observer(() => {
 
   if (!post) return <div>로딩 중...</div>;
 
-  const author = userStore.getUser(post.author_id);
-
   return (
     <MainLayout>
       <div className="post-detail">
         <h1>{post.title}</h1>
         <div className="post-meta">
-          <span>작성자: {author?.name || '익명'}</span>
+          <span>작성자: {post.author}</span>
           <span>작성일: {post.createdAt}</span>
         </div>
         {post.image && (
           <div className="post-image">
-            <img src={post.image} alt={post.title} />
+            <img 
+              src={post.image} 
+              alt={post.title}
+              onError={(e) => {
+                e.target.src = "/images/default-thumbnail.jpg";
+              }}
+            />
           </div>
         )}
         <div className="post-content">

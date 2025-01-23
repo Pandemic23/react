@@ -58,7 +58,7 @@ const PostList = observer(() => {
   return (
     <>
       {postStore.posts.map((post) => {
-        const author = userStore.getUser(post.author_id);
+    
         return (
           <div className='list' key={post.id}>
             <div className="post-preview">
@@ -76,7 +76,7 @@ const PostList = observer(() => {
                 <Link to={`/post/${post.id}`}>{post.title}</Link>
                 <p className="post-excerpt">{post.excerpt}</p>
                 <div className="post-meta">
-                  <span>{author?.name || '익명'} · {post.createdAt}</span>
+                  <span>{post.author || '익명'} · {post.createdAt}</span>
                   <div className='goodbad'>
                     <Good postId={post.id} likes={post.likes} />
                     <Bad postId={post.id} dislikes={post.dislikes} />
