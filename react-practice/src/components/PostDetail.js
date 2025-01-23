@@ -6,6 +6,7 @@ import { observer } from 'mobx-react-lite';
 import MainLayout from './layout/MainLayout';
 import { userStore } from '../stores/UserStore';
 import { postStore } from '../stores/PostStore';
+import { authStore } from '../stores/AuthStore';
 
 const PostDetail = observer(() => {
   const { id } = useParams();
@@ -38,14 +39,20 @@ const PostDetail = observer(() => {
 
   if (!post) return <div>로딩 중...</div>;
 
+  const isAuthor = post.author_id === authStore.user?.id;
+
   return (
     <div className="post-detail">
       <div className="post-header">
         <h1>{post.title}</h1>
-        <button className='edit-button'
-        onClick={() => navigate(`/post/${post.id}/edit`)}>
-          수정
-        </button>
+        {isAuthor && (
+          <button 
+            className='edit-button'
+            onClick={() => navigate(`/post/${post.id}/edit`)}
+          >
+            수정
+          </button>
+        )}
       </div>
       <div className="post-meta">
         <span>작성자: {post.author}</span>

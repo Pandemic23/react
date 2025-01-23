@@ -58,6 +58,26 @@ const PostList = observer(() => {
     );
   };
 
+  const Pagination = observer(({ currentPage, totalPages, onPageChange }) => {
+    return (
+      <div className="pagination">
+        <button 
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          이전
+        </button>
+        <span>페이지 {currentPage} / {totalPages}</span>
+        <button 
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+        >
+          다음
+        </button>
+      </div>
+    );
+  });
+
   return (
     <>
       <div className="post-list-header">
@@ -103,21 +123,7 @@ const PostList = observer(() => {
         );
       })}
 
-      <div className="pagination">
-        <button 
-          onClick={() => postStore.setPage(postStore.currentPage - 1)}
-          disabled={postStore.currentPage === 1}
-        >
-          이전
-        </button>
-        <span>페이지 {postStore.currentPage} / {postStore.totalPages}</span>
-        <button 
-          onClick={() => postStore.setPage(postStore.currentPage + 1)}
-          disabled={postStore.currentPage >= postStore.totalPages}
-        >
-          다음
-        </button>
-      </div>
+      <Pagination currentPage={postStore.currentPage} totalPages={postStore.totalPages} onPageChange={postStore.setPage} />
     </>
   );
 });

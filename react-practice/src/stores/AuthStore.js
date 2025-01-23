@@ -79,6 +79,22 @@ class AuthStore {
       this.loading = false;
     }
   };
+
+  handleError = (error) => {
+    this.error = error.message;
+    console.error('Error:', error);
+  };
+
+  withLoading = async (action) => {
+    this.loading = true;
+    try {
+      await action();
+    } catch (error) {
+      this.handleError(error);
+    } finally {
+      this.loading = false;
+    }
+  };
 }
 
 export const authStore = new AuthStore(); 

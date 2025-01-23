@@ -10,9 +10,7 @@ const MainLayout = observer(({ children }) => {
         <div className='logo'>Blog</div>
         <nav className='main-nav'>
           <Link to="/">홈</Link>
-          <Link to="/MovingC">이동하기</Link>
-          <Link to="/">카테고리</Link>
-          <Link to="/">방명록</Link>
+          <Link to="/add">글쓰기</Link>
         </nav>
       </header>
 

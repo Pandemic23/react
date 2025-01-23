@@ -14,6 +14,7 @@ const PostForm = observer(({ mode = 'create' }) => {
     excerpt: '',
   });
   const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -50,6 +51,12 @@ const PostForm = observer(({ mode = 'create' }) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith('image/')) {
       setImageFile(file);
+      // 이미지 미리보기 URL 생성
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     } else {
       setError('이미지 파일만 업로드 가능합니다.');
     }

@@ -5,6 +5,7 @@ import App from "../components/App";
 import PostDetail from "../components/PostDetail";
 import PostForm from "../components/PostForm";
 import PostList from "../components/PostList";
+import NotFound from "../components/NotFound";
 
 const AppRoutes = () => {
   return (
@@ -15,6 +16,7 @@ const AppRoutes = () => {
           <Route path="add" element={<PostForm mode="create" />} />
           <Route path="post/:id" element={<PostDetail />} />
           <Route path="post/:id/edit" element={<PostForm mode="edit" />} />
+          <Route path="*" element={<NotFound />} />
           <Route path="MovingC" element={<MovingC />} />
         </Route>
       </Routes>
