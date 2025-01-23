@@ -31,7 +31,7 @@ export const blogApi = {
       const from = page * 5;
       const to = from + 4;
       
-      // 먼저 posts 데이터 가져오기
+      // 게시글 데이터 가져오기
       const { data: posts, error: postsError, count } = await supabase
         .from('posts')
         .select('*', { count: 'exact' })
@@ -40,28 +40,51 @@ export const blogApi = {
       
       if (postsError) throw postsError;
 
+      console.log('원본 게시글 데이터:', posts); // 원본 데이터 확인
+
       // 각 게시글의 작성자 정보 가져오기
       const postsWithAuthors = await Promise.all(
         posts.map(async (post) => {
+          if (!post.author_id) return post;
+
           const { data: authorData } = await supabase
             .from('profiles')
             .select('name')
             .eq('id', post.author_id)
             .single();
 
+          console.log('작성자 데이터:', authorData); // 작성자 데이터 확인
+
           return {
-            id: post.id,
-            title: post.title,
-            excerpt: post.excerpt,
-            image: post.image_url,
-            createdAt: new Date(post.created_at).toLocaleDateString(),
-            author: authorData?.name || '익명'
+            ...post,
+            author: authorData?.name
           };
         })
       );
+
+      // 데이터 포맷팅
+      const formattedData = postsWithAuthors.map(post => {
+        const formatted = {
+          id: post.id,
+          title: post.title,
+          content: post.content,
+          excerpt: post.excerpt || (post.content ? post.content.substring(0, 150) + '...' : ''),
+          image: post.image_url,
+          createdAt: new Date(post.created_at).toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          author: post.author || '익명',
+          likes: post.likes || 0,
+          dislikes: post.dislikes || 0
+        };
+        console.log('포맷팅된 게시글:', formatted); // 포맷팅된 데이터 확인
+        return formatted;
+      });
       
       return {
-        content: postsWithAuthors,
+        content: formattedData,
         totalPages: Math.ceil(count / 5)
       };
     } catch (error) {
@@ -181,11 +204,11 @@ export const blogApi = {
   // 좋아요/싫어요 관련 API
   async updateReaction(postId, type) {
     const { error } = await supabase.rpc(
-      type === 'LIKE' ? 'increment_likes' : 'increment_dislikes',
+      type === 'like' ? 'increment_likes' : 'increment_dislikes',
       { post_id: postId }
-    )
+    );
     
-    if (error) throw error
+    if (error) throw error;
   },
 
   async getPost(id) {
