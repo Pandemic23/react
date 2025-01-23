@@ -4,52 +4,28 @@ import { useState, useEffect } from 'react';
 import ProfileEdit from './ProfileEdit';
 import { blogApi } from '../services/api';
 import LoginForm from './LoginForm';
+import { observer } from 'mobx-react-lite';
+import { postStore } from '../stores/PostStore';
+import { authStore } from '../stores/AuthStore';
 
-const App=()=> {
-  const [posts, setPosts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState(null);
+const App = observer(() => {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    checkUser();
+    authStore.checkUser();
   }, []);
 
-  const checkUser = async () => {
-    try {
-      const currentUser = await blogApi.auth.getCurrentUser();
-      console.log('현재 사용자 상태:', currentUser);
-      
-      if (currentUser) {
-        setUser(currentUser);
-        try {
-          const profileData = await blogApi.getProfile();
-          setProfile(profileData);
-        } catch (profileError) {
-          console.error('프로필 로드 에러:', profileError);
-          setProfile(null);
-        }
-      } else {
-        setUser(null);
-        setProfile(null);
-      }
-    } catch (error) {
-      console.error('사용자 확인 에러:', error);
-      setUser(null);
-      setProfile(null);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (authStore.user) {
+      postStore.loadPosts(postStore.currentPage);
     }
-  };
+  }, [authStore.user]);
 
   const handleProfileSave = async (newProfile) => {
     try {
       await blogApi.updateProfile(newProfile);
       const updatedProfile = await blogApi.getProfile();
-      setProfile(updatedProfile);
+      authStore.profile = updatedProfile;
       setIsEditingProfile(false);
     } catch (error) {
       console.error('프로필 업데이트 에러:', error);
@@ -57,14 +33,13 @@ const App=()=> {
   };
 
   const handleLoginSuccess = () => {
-    window.location.reload(); // 로그인 성공 후 페이지 새로고침
+    authStore.checkUser();
   };
 
   const handleLogout = async () => {
     try {
       await blogApi.auth.signOut();
-      setUser(null);
-      setProfile(null);
+      authStore.logout();
     } catch (error) {
       console.error('로그아웃 에러:', error);
     }
@@ -73,24 +48,7 @@ const App=()=> {
   const good = <Good/>
   const bad = <Bad/>
 
-  // 게시글 로드 함수
-  const loadPosts = async (page) => {
-    try {
-      const { content, totalPages } = await blogApi.getPosts(page - 1);
-      setPosts(content);
-      console.log(content);
-      setTotalPages(totalPages);
-    } catch (error) {
-      console.error('게시글 로드 에러:', error);
-    }
-  };
-
-  // 게시글 로드 useEffect
-  useEffect(() => {
-    loadPosts(currentPage);
-  }, [currentPage]);
-
-  if (loading) {
+  if (authStore.loading) {
     return (
       <div className="loading-screen">
         <div className="loading-spinner"></div>
@@ -111,13 +69,13 @@ const App=()=> {
         </nav>
       </header>
 
-      {!user ? (
-        <LoginForm onLoginSuccess={handleLoginSuccess} />
+      {!authStore.user ? (
+        <LoginForm onLoginSuccess={() => authStore.checkUser()} />
       ) : (
         <div className='main-container'>
           {/* 블로그 포스트 영역 */}
           <main className='content-area'>
-            {posts.map((post) => (
+            {postStore.posts.map((post) => (
               <div className='list' key={post.id}>
                 <div className="post-preview">
                   {post.image && (
@@ -141,17 +99,15 @@ const App=()=> {
 
             <div className="pagination">
               <button 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
+                onClick={() => postStore.setPage(postStore.currentPage - 1)}
+                disabled={postStore.currentPage === 1}
               >
                 이전
               </button>
-              <span>페이지 {currentPage} / {totalPages}</span>
+              <span>페이지 {postStore.currentPage} / {postStore.totalPages}</span>
               <button 
-                onClick={() => setCurrentPage(prev => 
-                  Math.min(prev + 1, totalPages)
-                )}
-                disabled={currentPage >= totalPages}
+                onClick={() => postStore.setPage(postStore.currentPage + 1)}
+                disabled={postStore.currentPage >= postStore.totalPages}
               >
                 다음
               </button>
@@ -159,19 +115,19 @@ const App=()=> {
           </main>
 
           {/* 사이드바 프로필 */}
-          {!loading && profile && (
+          {authStore.profile && (
             <aside className='sidebar'>
               <div className='profile-card'>
                 <img 
-                  src={profile.avatar_url || "/images/default-avatar.jpg"} 
+                  src={authStore.profile.avatar_url || "/images/default-avatar.jpg"} 
                   alt="프로필 이미지" 
                   className='profile-image'
                 />
-                <h2>{profile.name}</h2>
-                <p className='bio'>{profile.bio}</p>
+                <h2>{authStore.profile.name}</h2>
+                <p className='bio'>{authStore.profile.bio}</p>
                 <div className='social-links'>
-                  <a href={profile.github_url} target="_blank" rel="noopener noreferrer">GitHub</a>
-                  <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                  <a href={authStore.profile.github_url} target="_blank" rel="noopener noreferrer">GitHub</a>
+                  <a href={authStore.profile.linkedin_url} target="_blank" rel="noopener noreferrer">LinkedIn</a>
                 </div>
                 <div className="profile-buttons">
                   <button 
@@ -195,14 +151,14 @@ const App=()=> {
 
       {isEditingProfile && (
         <ProfileEdit 
-          profile={profile}
+          profile={authStore.profile}
           onSave={handleProfileSave}
           onCancel={() => setIsEditingProfile(false)}
         />
       )}
     </div>
   );
-}
+});
 
 function Good() {
   const [score, setScore] = useState(0);

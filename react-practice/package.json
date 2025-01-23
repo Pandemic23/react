@@ -5,16 +5,18 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.48.0",
     "cra-template": "1.2.0",
+    "dotenv": "^16.0.0",
+    "mobx": "^6.13.5",
+    "mobx-react-lite": "^4.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.2",
-    "react-scripts": "5.0.1",
-    "dotenv": "^16.0.0"
+    "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -34,5 +36,19 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "plugins": [
+    [
+      "@babel/plugin-proposal-decorators",
+      {
+        "legacy": true
+      }
+    ],
+    [
+      "@babel/plugin-proposal-class-properties",
+      {
+        "loose": true
+      }
+    ]
+  ]
 }
