@@ -6,47 +6,44 @@ import { blogApi } from '../services/api';
 import LoginForm from './LoginForm';
 
 const App=()=> {
-  let [posts] = useState([
-    {
-      id: 1,
-      title: '첫번째 게시글',
-      excerpt: '첫번째 게시글의 미리보기 내용입니다.',
-      image: 'https://via.placeholder.com/300x200',
-      createdAt: '2024-03-21'
-    },
-    // ... 더 많은 게시글
-  ]);
-  
+  const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 5;
-
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
-
-  const [profile, setProfile] = useState(null);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    async function checkUser() {
-      try {
-        const currentUser = await blogApi.auth.getCurrentUser();
-        setUser(currentUser);
-        if (currentUser) {
-          const data = await blogApi.getProfile(); // 저장된 프로필 정보 로드
-          setProfile(data); // avatar_url 포함한 프로필 정보 설정
-        }
-      } catch (error) {
-        console.error('사용자 확인 에러:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     checkUser();
   }, []);
+
+  const checkUser = async () => {
+    try {
+      const currentUser = await blogApi.auth.getCurrentUser();
+      console.log('현재 사용자 상태:', currentUser);
+      
+      if (currentUser) {
+        setUser(currentUser);
+        try {
+          const profileData = await blogApi.getProfile();
+          setProfile(profileData);
+        } catch (profileError) {
+          console.error('프로필 로드 에러:', profileError);
+          setProfile(null);
+        }
+      } else {
+        setUser(null);
+        setProfile(null);
+      }
+    } catch (error) {
+      console.error('사용자 확인 에러:', error);
+      setUser(null);
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleProfileSave = async (newProfile) => {
     try {
@@ -76,6 +73,31 @@ const App=()=> {
   const good = <Good/>
   const bad = <Bad/>
 
+  // 게시글 로드 함수
+  const loadPosts = async (page) => {
+    try {
+      const { content, totalPages } = await blogApi.getPosts(page - 1);
+      setPosts(content);
+      console.log(content);
+      setTotalPages(totalPages);
+    } catch (error) {
+      console.error('게시글 로드 에러:', error);
+    }
+  };
+
+  // 게시글 로드 useEffect
+  useEffect(() => {
+    loadPosts(currentPage);
+  }, [currentPage]);
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="App">
       {/* 헤더 메뉴 */}
@@ -95,7 +117,7 @@ const App=()=> {
         <div className='main-container'>
           {/* 블로그 포스트 영역 */}
           <main className='content-area'>
-            {currentPosts.map((post) => (
+            {posts.map((post) => (
               <div className='list' key={post.id}>
                 <div className="post-preview">
                   {post.image && (
@@ -109,12 +131,11 @@ const App=()=> {
                     <Link to={`/post/${post.id}`}>{post.title}</Link>
                     <p className="post-excerpt">{post.excerpt}</p>
                     <div className="post-meta">
-                      <span>{post.createdAt}</span>
+                      <span>{post.author} · {post.createdAt}</span>
                       <div className='goodbad'> {good}{bad} </div>
                     </div>
                   </div>
                 </div>
-                <hr/>
               </div>
             ))}
 
@@ -125,12 +146,12 @@ const App=()=> {
               >
                 이전
               </button>
-              <span>페이지 {currentPage}</span>
+              <span>페이지 {currentPage} / {totalPages}</span>
               <button 
                 onClick={() => setCurrentPage(prev => 
-                  Math.min(prev + 1, Math.ceil(posts.length / postsPerPage))
+                  Math.min(prev + 1, totalPages)
                 )}
-                disabled={currentPage >= Math.ceil(posts.length / postsPerPage)}
+                disabled={currentPage >= totalPages}
               >
                 다음
               </button>

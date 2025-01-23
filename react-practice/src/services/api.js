@@ -12,27 +12,61 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error('Supabase 환경변수가 설정되지 않았습니다.');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    storageKey: 'blog-auth-token',
+    storage: window.localStorage,
+    // 60분 후 세션 만료
+    expiryMargin: 60 * 60
+  }
+});
 
 export const blogApi = {
   // 게시글 관련 API
-  async getPosts(page) {
-    const from = page * 5
-    const to = from + 4
-    
-    const { data, error, count } = await supabase
-      .from('posts')
-      .select('*', { count: 'exact' })
-      .range(from, to)
-      .order('created_at', { ascending: false })
-    
-    if (error) throw error
-    
-    return {
-      data: {
-        content: data,
+  async getPosts(page = 0) {
+    try {
+      const from = page * 5;
+      const to = from + 4;
+      
+      // 먼저 posts 데이터 가져오기
+      const { data: posts, error: postsError, count } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact' })
+        .range(from, to)
+        .order('created_at', { ascending: false });
+      
+      if (postsError) throw postsError;
+
+      // 각 게시글의 작성자 정보 가져오기
+      const postsWithAuthors = await Promise.all(
+        posts.map(async (post) => {
+          const { data: authorData } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', post.author_id)
+            .single();
+
+          return {
+            id: post.id,
+            title: post.title,
+            excerpt: post.excerpt,
+            image: post.image_url,
+            createdAt: new Date(post.created_at).toLocaleDateString(),
+            author: authorData?.name || '익명'
+          };
+        })
+      );
+      
+      return {
+        content: postsWithAuthors,
         totalPages: Math.ceil(count / 5)
-      }
+      };
+    } catch (error) {
+      console.error('게시글 로드 에러:', error);
+      throw error;
     }
   },
 
@@ -63,7 +97,22 @@ export const blogApi = {
     // 현재 사용자 확인
     async getCurrentUser() {
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) throw error;
+      
+      if (error) {
+        console.error('getCurrentUser 에러:', error);
+        return null;
+      }
+
+      // 토큰 만료 체크
+      const session = await supabase.auth.getSession();
+      if (session?.data?.session?.expires_at) {
+        const expiresAt = new Date(session.data.session.expires_at * 1000);
+        if (expiresAt < new Date()) {
+          await this.signOut();
+          return null;
+        }
+      }
+
       return user;
     },
 
@@ -212,5 +261,23 @@ export const blogApi = {
     });
 
     if (error) throw error;
+  },
+
+  async getPostNavigation(postId) {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('id, title')
+      .or(`id.lt.${postId},id.gt.${postId}`)
+      .order('id', { ascending: true })
+      .limit(2);
+
+    if (error) throw error;
+
+    const navigation = {
+      prev: data.find(p => p.id < postId) || null,
+      next: data.find(p => p.id > postId) || null
+    };
+
+    return { data: navigation };
   }
 }; 
