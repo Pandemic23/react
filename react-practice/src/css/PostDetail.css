@@ -61,16 +61,27 @@
 
 /* 이미지 */
 .post-image {
-  margin: 2rem -2rem;
+  margin: 2rem 0;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
   overflow: hidden;
+  min-height: 400px;
+  padding: 20px;
 }
 
 .post-image img {
-  width: 100%;
+  max-width: 90%;
+  max-height: 600px;
+  width: auto;
   height: auto;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* 본문 내용 */
