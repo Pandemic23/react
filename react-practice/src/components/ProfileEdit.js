@@ -8,7 +8,8 @@ const ProfileEdit = observer(() => {
     name: authStore.profile?.name || '',
     bio: authStore.profile?.bio || '',
     github_url: authStore.profile?.github_url || '',
-    linkedin_url: authStore.profile?.linkedin_url || ''
+    linkedin_url: authStore.profile?.linkedin_url || '',
+    avatar_url: authStore.profile?.avatar_url || ''
   });
   const [imageFile, setImageFile] = useState(null);
   const [error, setError] = useState(null);
@@ -34,7 +35,10 @@ const ProfileEdit = observer(() => {
     e.preventDefault();
     setError(null);
     try {
-      await authStore.updateProfile({ ...formData, imageFile });
+      await authStore.updateProfile({
+        ...formData,
+        imageFile,
+      });
     } catch (error) {
       setError(error.message || '프로필 업데이트에 실패했습니다.');
     }

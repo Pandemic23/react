@@ -161,42 +161,59 @@ export const blogApi = {
     return data;
   },
 
-  async updateProfile(profileData, imageFile) {
+  async updateProfile(profileData) {
     try {
-      let avatarUrl = profileData.avatar_url;
-      
-      if (imageFile) {
-        console.log('새 이미지 파일 감지:', imageFile);
-        avatarUrl = await this.uploadProfileImage(imageFile);
-      }
-
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('현재 사용자:', user);
-      
       if (!user) throw new Error('로그인이 필요합니다');
 
-      const updateData = {
-        id: user.id,
-        ...profileData,
-        avatar_url: avatarUrl,
-        updated_at: new Date()
-      };
-      console.log('업데이트할 프로필 데이터:', updateData);
+      // 기존 이미지 URL 유지
+      let avatarUrl = profileData.avatar_url;
+      const imageFile = profileData.imageFile;
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(updateData, {
-          returning: 'minimal'
-        });
+      // 새 이미지 파일이 있는 경우에만 업로드 시도
+      if (imageFile) {
+        try {
+          const fileExt = imageFile.name.split('.').pop();
+          const fileName = `${Date.now()}.${fileExt}`;
+          const filePath = `public/${fileName}`;
 
-      if (error) {
-        console.error('프로필 업데이트 에러:', error);
-        throw error;
+          const { error: uploadError } = await supabase.storage
+            .from('profile_images')
+            .upload(filePath, imageFile);
+
+          if (uploadError) throw uploadError;
+
+          const { data } = supabase.storage
+            .from('profile_images')
+            .getPublicUrl(filePath);
+
+          avatarUrl = data.publicUrl;
+        } catch (error) {
+          console.error('이미지 업로드 에러:', error);
+          // 이미지 업로드 실패 시 기존 URL 유지
+        }
       }
 
-      return { ...profileData, avatar_url: avatarUrl };
+      // 프로필 데이터 업데이트
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          name: profileData.name,
+          bio: profileData.bio,
+          github_url: profileData.github_url,
+          linkedin_url: profileData.linkedin_url,
+          avatar_url: avatarUrl,  // 새 이미지가 없으면 기존 URL 사용
+          updated_at: new Date()
+        });
+
+      if (error) throw error;
+
+      return {
+        ...profileData,
+        avatar_url: avatarUrl
+      };
     } catch (error) {
-      console.error('프로필 업데이트 중 에러 발생:', error);
       throw error;
     }
   },
