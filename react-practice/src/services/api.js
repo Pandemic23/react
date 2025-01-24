@@ -356,5 +356,31 @@ export const blogApi = {
     };
 
     return { data: navigation };
+  },
+
+  updatePost: async (postId, postData, imageFile) => {
+    try {
+      let imageUrl = postData.image_url;
+      
+      // Upload new image if provided
+      if (imageFile) {
+        imageUrl = await blogApi.uploadBlogImage(imageFile);
+      }
+
+      const { data, error } = await supabase
+        .from('posts')
+        .update({
+          ...postData,
+          image_url: imageUrl,
+          updated_at: new Date()
+        })
+        .eq('id', postId)
+        .single();
+        
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      throw error;
+    }
   }
 }; 

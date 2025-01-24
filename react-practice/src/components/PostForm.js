@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { blogApi } from '../services/api';
+import { postStore } from '../stores/PostStore';
 import '../css/PostForm.css';
+
+
 
 const PostForm = observer(({ mode = 'create' }) => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [post, setPost] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -29,6 +33,9 @@ const PostForm = observer(({ mode = 'create' }) => {
             content: postData.content,
             excerpt: postData.excerpt || '',
           });
+          if (postData.image) {
+            setImagePreview(postData.image);
+          }
         } catch (error) {
           setError('게시글을 불러올 수 없습니다.');
           navigate('/');
@@ -38,6 +45,23 @@ const PostForm = observer(({ mode = 'create' }) => {
 
     loadPost();
   }, [mode, id, navigate]);
+
+  // 현재 로그인한 사용자 정보 가져오기
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      try {
+        const user = await blogApi.auth.getCurrentUser();
+        setCurrentUser(user);
+        if (!user && mode === 'create') {
+          setError('로그인이 필요합니다.');
+          navigate('/login');
+        }
+      } catch (error) {
+        console.error('사용자 정보 로드 실패:', error);
+      }
+    };
+    getCurrentUser();
+  }, [mode, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,13 +91,25 @@ const PostForm = observer(({ mode = 'create' }) => {
     setLoading(true);
     setError(null);
 
+    if (!currentUser && mode === 'create') {
+      setError('로그인이 필요합니다.');
+      navigate('/login');
+      return;
+    }
+
     try {
+      const postDataToSubmit = {
+        ...formData,
+        image_url: !imageFile && post?.image ? post.image : undefined,
+        author_id: currentUser?.id
+      };
+
       if (mode === 'create') {
-        await blogApi.createPost(formData, imageFile);
+        await postStore.createPost(postDataToSubmit, imageFile);
       } else {
-        await blogApi.updatePost(id, formData, imageFile);
+        await postStore.updatePost(id, postDataToSubmit, imageFile);
       }
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (error) {
       setError(error.message);
     } finally {
@@ -140,7 +176,7 @@ const PostForm = observer(({ mode = 'create' }) => {
         <div className="form-actions">
           <button 
             type="button" 
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/')}
             disabled={loading}
           >
             취소
