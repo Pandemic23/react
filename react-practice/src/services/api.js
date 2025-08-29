@@ -1,9 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 
-console.log('환경변수 확인:', {
-  SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
-  SUPABASE_KEY: process.env.REACT_APP_SUPABASE_KEY
-});
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
 const supabaseKey = process.env.REACT_APP_SUPABASE_KEY
@@ -358,7 +354,7 @@ export const blogApi = {
     return { data: navigation };
   },
 
-  updatePost: async (postId, postData, imageFile) => {
+    updatePost: async (postId, postData, imageFile) => {
     try {
       let imageUrl = postData.image_url;
       
@@ -382,5 +378,73 @@ export const blogApi = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // 캘린더 관련 API
+  calendar: {
+    /**
+     * 모든 스케줄을 가져옵니다.
+     */
+    async getSchedules() {
+      const { data, error } = await supabase
+        .from('schedules')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching schedules:', error);
+        throw error;
+      }
+      return data;
+    },
+
+    /**
+     * 새로운 스케줄을 'pending' 상태로 추가합니다.
+     * @param {object} eventData - { title, start, end, isAllDay }
+     */
+    async addSchedule(eventData) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated.");
+
+      const newSchedule = {
+        title: eventData.title,
+        start_time: eventData.start,
+        end_time: eventData.end,
+        is_allday: eventData.isAllDay,
+        created_by: user.id,
+        status: 'pending',
+      };
+
+      const { data, error } = await supabase
+        .from('schedules')
+        .insert([newSchedule])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding schedule:', error);
+        throw error;
+      }
+      return data;
+    },
+
+    /**
+     * 스케줄의 상태를 업데이트합니다. (승인/거절)
+     * @param {string|number} scheduleId - 업데이트할 스케줄의 ID
+     * @param {string} status - 새로운 상태 ('approved' 또는 'rejected')
+     */
+    async updateScheduleStatus(scheduleId, status) {
+      const { data, error } = await supabase
+        .from('schedules')
+        .update({ status: status })
+        .eq('id', scheduleId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating schedule status:', error);
+        throw error;
+      }
+      return data;
+    }
   }
-}; 
+};

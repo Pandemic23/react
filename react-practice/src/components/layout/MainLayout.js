@@ -11,6 +11,7 @@ const MainLayout = observer(({ children }) => {
         <nav className='main-nav'>
           <Link to="/">홈</Link>
           <Link to="/add">글쓰기</Link>
+          <Link to="/calendar">캘린더</Link>
         </nav>
       </header>
 
