@@ -306,3 +306,71 @@ body{
   background: #e99daacc;
   transform: translateY(-2px);
 }
+
+/* React Big Calendar Custom Styles */
+.rbc-toolbar {
+  background-color: #e8f5e9; /* 연한 녹색 */
+  border-radius: 8px 8px 0 0;
+  padding: 10px 20px;
+  border-bottom: 1px solid #c8e6c9;
+}
+
+.rbc-toolbar .rbc-toolbar-label {
+  color: #2e7d32; /* 진한 녹색 */
+  font-weight: bold;
+}
+
+.rbc-btn-group button {
+  background-color: transparent;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
+}
+
+.rbc-btn-group button:hover {
+  background-color: #c8e6c9;
+}
+
+.rbc-btn-group button.rbc-active {
+  background-color: #a5d6a7; /* 중간 녹색 */
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+/* 이벤트(스케줄)의 기본 스타일은 eventPropGetter에서 설정하므로 여기서는 최소화합니다. */
+.rbc-event {
+  border-radius: 8px !important;
+  border: none !important;
+  padding: 4px 8px;
+}
+
+.rbc-show-more {
+  color: #2e7d32;
+  background-color: transparent;
+  font-weight: bold;
+}
+
+.rbc-today {
+  background-color: #f1f8e9; /* 매우 연한 녹색 */
+}
+
+.rbc-month-view,
+.rbc-time-grid-container,
+.rbc-time-header-content,
+.rbc-agenda-view {
+  border-color: #c8e6c9;
+}
+
+.rbc-month-view {
+    border-radius: 0 0 8px 8px;
+}
+
+.rbc-header {
+  border-bottom: 1px solid #c8e6c9;
+}
+
+.rbc-header + .rbc-header,
+.rbc-day-bg + .rbc-day-bg {
+    border-left: 1px solid #c8e6c9;
+}

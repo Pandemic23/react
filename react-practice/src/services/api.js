@@ -36,7 +36,7 @@ export const blogApi = {
       
       if (postsError) throw postsError;
 
-      console.log('원본 게시글 데이터:', posts); // 원본 데이터 확인
+
 
       // 각 게시글의 작성자 정보 가져오기
       const postsWithAuthors = await Promise.all(
@@ -49,7 +49,7 @@ export const blogApi = {
             .eq('id', post.author_id)
             .single();
 
-          console.log('작성자 데이터:', authorData); // 작성자 데이터 확인
+
 
           return {
             ...post,
@@ -75,7 +75,7 @@ export const blogApi = {
           likes: post.likes || 0,
           dislikes: post.dislikes || 0
         };
-        console.log('포맷팅된 게시글:', formatted); // 포맷팅된 데이터 확인
+
         return formatted;
       });
       
@@ -84,7 +84,6 @@ export const blogApi = {
         totalPages: Math.ceil(count / 5)
       };
     } catch (error) {
-      console.error('게시글 로드 에러:', error);
       throw error;
     }
   },
@@ -118,7 +117,6 @@ export const blogApi = {
       const { data: { user }, error } = await supabase.auth.getUser();
       
       if (error) {
-        console.error('getCurrentUser 에러:', error);
         return null;
       }
 
@@ -185,7 +183,7 @@ export const blogApi = {
 
           avatarUrl = data.publicUrl;
         } catch (error) {
-          console.error('이미지 업로드 에러:', error);
+
           // 이미지 업로드 실패 시 기존 URL 유지
         }
       }
@@ -267,7 +265,7 @@ export const blogApi = {
         dislikes: post.dislikes || 0
       };
     } catch (error) {
-      console.error('게시글 상세 조회 에러:', error);
+
       throw error;
     }
   },
@@ -275,7 +273,7 @@ export const blogApi = {
   // 프로필 이미지 업로드
   async uploadProfileImage(file) {
     try {
-      console.log('이미지 업로드 시작:', file);
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `public/${fileName}`;
@@ -285,7 +283,7 @@ export const blogApi = {
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('이미지 업로드 에러:', uploadError);
+
         throw uploadError;
       }
 
@@ -293,10 +291,10 @@ export const blogApi = {
         .from('profile_images')
         .getPublicUrl(filePath);
 
-      console.log('업로드된 이미지 URL:', data.publicUrl);
+
       return data.publicUrl;
     } catch (error) {
-      console.error('이미지 업로드 중 에러 발생:', error);
+
       throw error;
     }
   },
@@ -391,7 +389,7 @@ export const blogApi = {
         .select('*');
 
       if (error) {
-        console.error('Error fetching schedules:', error);
+
         throw error;
       }
       return data;
@@ -407,9 +405,10 @@ export const blogApi = {
 
       const newSchedule = {
         title: eventData.title,
+        description: eventData.description,
         start_time: eventData.start,
         end_time: eventData.end,
-        is_allday: eventData.isAllDay,
+        is_allday: eventData.is_allday,
         created_by: user.id,
         status: 'pending',
       };
@@ -421,7 +420,7 @@ export const blogApi = {
         .single();
 
       if (error) {
-        console.error('Error adding schedule:', error);
+
         throw error;
       }
       return data;
@@ -441,7 +440,24 @@ export const blogApi = {
         .single();
 
       if (error) {
-        console.error('Error updating schedule status:', error);
+        
+        throw error;
+      }
+      return data;
+    },
+
+    /**
+     * 스케줄을 삭제합니다.
+     * @param {string|number} scheduleId - 삭제할 스케줄의 ID
+     */
+    async deleteSchedule(scheduleId) {
+      const { data, error } = await supabase
+        .from('schedules')
+        .delete()
+        .eq('id', scheduleId);
+
+      if (error) {
+        console.error('Error deleting schedule from Supabase:', error);
         throw error;
       }
       return data;
